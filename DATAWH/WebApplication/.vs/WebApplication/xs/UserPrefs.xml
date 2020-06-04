@@ -1,0 +1,29 @@
+﻿<Properties StartupConfiguration="{117EB218-3EEE-47AD-BACE-6C09C8945683}|Default">
+  <MonoDevelop.Ide.Workbench ActiveDocument="WebApplication/Controllers/ArtworkController.cs">
+    <Files>
+      <File FileName="WebApplication/Controllers/ArtworkController.cs" Line="179" Column="18" />
+    </Files>
+    <Pads>
+      <Pad Id="ProjectPad">
+        <State name="__root__">
+          <Node name="WebApplication" expanded="True">
+            <Node name="WebApplication" expanded="True">
+              <Node name="Controllers" expanded="True">
+                <Node name="ArtworkController.cs" selected="True" />
+              </Node>
+            </Node>
+          </Node>
+        </State>
+      </Pad>
+    </Pads>
+  </MonoDevelop.Ide.Workbench>
+  <MonoDevelop.Ide.ItemProperties.WebApplication PreferredExecutionTarget="/Applications/Google Chrome.app" />
+  <MonoDevelop.Ide.DebuggingService.PinnedWatches />
+  <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug" />
+  <MonoDevelop.Ide.DebuggingService.Breakpoints>
+    <BreakpointStore>
+      <Breakpoint file="/Users/Florinelx/Documents/GitHub/SemesterProject-4/DATAWH/WebApplication/WebApplication/Controllers/ArtworkController.cs" relfile="WebApplication/Controllers/ArtworkController.cs" line="187" column="1" />
+    </BreakpointStore>
+  </MonoDevelop.Ide.DebuggingService.Breakpoints>
+  <MultiItemStartupConfigurations />
+</Properties>
