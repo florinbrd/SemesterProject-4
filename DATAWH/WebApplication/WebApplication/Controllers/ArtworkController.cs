@@ -7,9 +7,11 @@ using DnsClient.Internal;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using WebApplication.Database;
 using WebApplication.Database.Repositories.ArtworkRep;
 using WebApplication.Database.Repositories.RoomRep;
 using WebApplication.Datamodel;
+using WebApplication.SQLCommands;
 
 
 namespace WebApplication.Controllers
@@ -21,11 +23,14 @@ namespace WebApplication.Controllers
     {
         private readonly ArtworkRepository artworkRepository;
         private readonly ILogger<ArtworkController> logger;
+        private readonly RoomRepository RoomRepository;
+      
 
-        public ArtworkController(ArtworkRepository artworkRepository, ILogger<ArtworkController> logger)
+        public ArtworkController(ArtworkRepository artworkRepository, ILogger<ArtworkController> logger, RoomRepository RoomRepository)
         {
             this.artworkRepository = artworkRepository;
             this.logger = logger;
+            this.RoomRepository = RoomRepository; 
 
         }
 
@@ -34,6 +39,7 @@ namespace WebApplication.Controllers
         [HttpGet("getall")]
         public async Task<IActionResult> getallArtworks()
         {
+           
             try
             {
                 ArtworkList artworkList = new ArtworkList();
@@ -43,11 +49,10 @@ namespace WebApplication.Controllers
 
                 return Ok(artworkList);
 
-               
             }
             catch (Exception exception)
             {
-                logger.LogError("Something went wrong internally in the server");
+                logger.LogError($"Something went wrong internally in the server: ", exception.Message);
                 return StatusCode(500, "Internal server error");
             }
 
@@ -73,7 +78,7 @@ namespace WebApplication.Controllers
             }
             catch (Exception exception)
             {
-                logger.LogError("Something else went wrong");
+                logger.LogError($"Something went wrong internally in the server: ", exception.Message);
                 return StatusCode(500, "Internal server error");
             }
 
@@ -94,7 +99,7 @@ namespace WebApplication.Controllers
             }
             catch (Exception exception)
             {
-                logger.LogError("Something went wrong internally in the server");
+                logger.LogError($"Something went wrong internally in the server: ", exception.Message);
                 return StatusCode(500, "Internal server error");
             }
         }
@@ -121,13 +126,15 @@ namespace WebApplication.Controllers
 
                 artworkRepository.CreateArtWork(artwork);
                 await artworkRepository.saveChanges();
+                
+               
 
                 return CreatedAtRoute("", new {id = artwork.Id}, artwork);
 
             }
             catch (Exception exception)
             {
-                logger.LogError("Something went wrong internally in the server");
+                logger.LogError($"Something went wrong internally in the server: ", exception.Message);
                 return StatusCode(500, "Internal server error");
             }
 
@@ -150,19 +157,52 @@ namespace WebApplication.Controllers
                 artworkRepository.DeleteArtwork(artwork);
                 await artworkRepository.saveChanges();
 
-                return NoContent();
+                return Ok("Artwork has been deleted");
             }
             catch (Exception exception)
             {
-                logger.LogError("Something went wrong internally in the server");
+                logger.LogError($"Something went wrong internally in the server: ", exception.Message);
                 return StatusCode(500, "Internal server error");
             }
         }
+
+        [HttpPut("moveartwork/{artid}/{location}")]
+        public async Task<IActionResult> MoveArtwork([FromRoute] int artid, [FromRoute] string location)
+        {
+            try
+            {
+                if (artid == null)
+                {
+                    logger.LogError("Art id is null");
+                    return BadRequest("Null artwork id");
+                    
+                } else if (location == null)
+                {
+                    logger.LogError("Location id is null");
+                    return BadRequest("Null Location id");
+                }
+                
+                
+                artworkRepository.MoveArtwork(artid, location);
+                await artworkRepository.saveChanges();
+                return Ok("it has been moved");
+                
+            }
+            
+            catch (Exception exception)
+            {
+                logger.LogError($"Something went wrong internally in the server: {exception.Message}");
+                return StatusCode(500, "Internal server error");
+            }
+
+        }
+        
 
 
         [HttpPut("edit/{id}")]
         public async Task<IActionResult> PutArtwork([FromRoute] int id, [FromBody] Artwork artwork)
         {
+            
 
             try
             {
@@ -183,17 +223,20 @@ namespace WebApplication.Controllers
                     logger.LogError("Invalid artwork object sent from client");
                     return BadRequest("Invalid artwork object");
                 }
+                
 
                 artworkRepository.UpdateArtwork(artwork);
                 await artworkRepository.saveChanges();
-
-                return NoContent();
+                return Ok("Artwork has been edited");
             }
             catch (Exception exception)
             {
-                logger.LogError("Something went wrong internally in the server");
+                logger.LogError($"Something went wrong internally in the server: {exception.Message}");
                 return StatusCode(500, "Internal server error");
             }
+     
+
+            
 
 
         }

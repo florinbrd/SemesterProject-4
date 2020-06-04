@@ -45,9 +45,64 @@ namespace WebApplication.Database.Repositories.ArtworkRep
 
         public void CreateArtWork(Artwork artwork)
         {
-            Create(artwork);
             
+            Create(artwork);
+            var storage = context.Rooms.Find("Storage");
+            if (storage.CurrentCapacity != storage.TotalCapacity)
+            {
+                storage.ArtworkList = new List<Artwork>();
+                storage.ArtworkList.Add(artwork);
+                storage.CurrentCapacity++; 
+            }
+
         }
+
+     
+
+        public string MoveArtwork(int artId, string location)
+        {
+            var artworkobject = context.Artworks.Find(artId);
+            artworkobject.Location = location; 
+
+            var previousroom =  context.Rooms.Find(artworkobject.Location);
+            var newRoom = context.Rooms.Find(location);
+
+            if (previousroom == null)
+            {
+                Console.WriteLine("The previous room is null");
+            } else if (artworkobject == null)
+            {
+                Console.WriteLine("The artwork is null");
+            }  else if (newRoom == null)
+            {
+                Console.WriteLine("The new room is null");
+            }
+
+            if (previousroom != null)
+            {
+                previousroom.ArtworkList = new List<Artwork>();
+                previousroom.ArtworkList.Remove(artworkobject);
+                previousroom.CurrentCapacity--;
+            }
+
+            
+            if (newRoom.CurrentCapacity != newRoom.TotalCapacity)
+            { newRoom.ArtworkList = new List<Artwork>();
+                newRoom.ArtworkList.Add(artworkobject);
+                newRoom.CurrentCapacity++;
+            }
+            else
+            {
+                return "Storage is full, artwork is not assigned to any room";
+            }
+
+            context.SaveChanges();
+            return "Room has been added to the Storage";
+
+           
+        }
+
+        
 
         public void UpdateArtwork(Artwork artwork)
         {
@@ -57,6 +112,8 @@ namespace WebApplication.Database.Repositories.ArtworkRep
         public void DeleteArtwork(Artwork artwork)
         {
             Delete(artwork);
+
+            context.SaveChanges();
         }
 
         public bool ArtworkExists(int artId)

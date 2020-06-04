@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
@@ -22,14 +23,40 @@ namespace WebApplication.Controllers
         public AccountController(AccountRepository accountRepository)
         {
             _accountRepository = accountRepository;
-           
         }
-        
-        // POST
-        [HttpPost ("create")]
-        public IActionResult createAccount([FromBody] Administrator admin)
+
+        // Login method, verifies if given username/password matches in the database
+        [HttpPost("login")] 
+        public bool login([FromBody] Administrator admin)
         {
-            Console.WriteLine("----------------------------");
+            if (admin == null)
+            {
+                Console.WriteLine("admin is null");
+                return false;
+            }
+
+            Console.WriteLine(admin.Email);
+            Console.WriteLine(admin.Password);
+            return _accountRepository.login(admin);
+        }
+
+        [HttpGet("users")]
+        public async Task<IActionResult> getAll()
+        {
+            AdministratorList users = new AdministratorList();
+            users.users = (List<Administrator>) _accountRepository.getAllUsernames().Result;
+            foreach (var u in users.users)
+            {
+                u.Password = "";
+            }
+
+            return Ok(users);
+        }
+
+        // Create new account
+        [HttpPost]
+        public async Task<IActionResult> createAccount([FromBody] Administrator admin)
+        {
             if (admin == null)
             {
                 return BadRequest();
@@ -39,18 +66,54 @@ namespace WebApplication.Controllers
             {
                 return BadRequest();
             }
-            
+
             _accountRepository.Create(admin);
             return CreatedAtRoute("", new {id = admin.Id}, admin);
         }
-        
-        [HttpGet("getall")]
-        public Task<IEnumerable<Room>> GetRooms()
-        {
-            Console.Write("dsadsadsadsa");
-            return null;
-        }
 
+        // Delete existing account by username//password
+        [HttpDelete("{email}")]
+        public async Task<IActionResult> deleteAdmin(string email)
+        {
+            Administrator admin = new Administrator();
+            admin.Email = email;
+            Console.WriteLine("delete admin");
+            var obj = _accountRepository.GetAdminByEmail(admin);
+           Task.Delay(3000);
+            if (_accountRepository.Delete(await obj))
+                return Ok("Account deleted.");
+
+            return BadRequest("Account doesn't exist");
+        }
         
+     
+
+        // Edit admin account username or password
+        [HttpPut]
+        public async Task<IActionResult> UpdateAdmin([FromBody] Administrator admin)
+        {
+            Console.WriteLine("update admin");
+            var obj = _accountRepository.GetAdminByEmail(admin);
+
+
+          Task.Delay(3000);
+
+            if (admin == null)
+            {
+                return BadRequest();
+            }
+
+            Console.WriteLine("This is the ID:  and this is the location code: " + admin.Id + ", and they are equal: ");
+
+            if (obj.Result != null)
+            {
+                obj.Result.Password = admin.Password;
+                if (_accountRepository.Update(await obj))
+                    return Ok("User updated");
+            }
+
+
+            return BadRequest("Username doesn't exist");
+        }
     }
 }

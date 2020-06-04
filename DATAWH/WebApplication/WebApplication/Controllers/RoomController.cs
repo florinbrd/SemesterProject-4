@@ -6,11 +6,13 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using WebApplication.Database;
 using WebApplication.Database.Repositories.ArtworkRep;
 using WebApplication.Datamodel;
 using WebApplication.MongoDB;
 using WebApplication.Database.Repositories.RoomRep;
 using WebApplication.Datamodel;
+using WebApplication.SQLCommands;
 
 
 namespace WebApplication.Controllers
@@ -22,7 +24,7 @@ namespace WebApplication.Controllers
         private readonly RoomRepository roomRepository;
         private readonly IMongoRepository _mongoRepository;
         private ILogger<RoomController> logger;
-       
+
 
 
         public RoomController(RoomRepository roomRepository, MongoRepository mongoRepository,
@@ -35,23 +37,21 @@ namespace WebApplication.Controllers
 
         // GET: api/Rooms
         [HttpGet("getall")]
-        public async Task<IActionResult> GetRooms()
+        public  async Task<IActionResult> GetRooms()
         {
-
-            try
-            {
+            
+            
+            try {
                 RoomList roomList = new RoomList();
-                roomList.rooms = (List<Room>) await roomRepository.getAllRoomsAsync();
-
+                roomList.rooms = await roomRepository.getAllRoomsAsync();
+                 roomList.addMeasurements(_mongoRepository.LoadAllRoomLastMeasurements());
                 logger.LogInformation("Returning all the rooms stored in the database");
-
-                return Ok(roomList);
-
-            }
+                return Ok(roomList); }
             catch (Exception exception)
             {
-                logger.LogError("Something went wrong internally in the server");
+                logger.LogError($"Something went wrong internally in the server: ", exception.Message);
                 return StatusCode(500, "Internal server error");
+                
             }
 
         }
@@ -76,7 +76,33 @@ namespace WebApplication.Controllers
             }
             catch (Exception exception)
             {
-                logger.LogError("Something else went wrong");
+                logger.LogError($"Something went wrong internally in the server: ", exception.Message);
+                return StatusCode(500, "Internal server error");
+            }
+
+        }
+        
+        // GET: api/Rooms/5
+        [HttpGet("getdetails/{id}")]
+        public async Task<IActionResult> getroomWithDetails(string id)
+        {
+            try
+            {
+                var obj = await roomRepository.GetRoomWithDetails(id);
+                if (obj == null)
+                {
+                    logger.LogError("The room does not exist");
+                    return NotFound();
+                }
+                else
+                {
+                    logger.LogInformation($"Returned the room with id {id}");
+                    return Ok(obj);
+                }
+            }
+            catch (Exception exception)
+            {
+                logger.LogError($"Something went wrong internally in the server: ", exception.Message);
                 return StatusCode(500, "Internal server error");
             }
 
@@ -94,6 +120,7 @@ namespace WebApplication.Controllers
             temp.Humidity = mongoMeasurement.humidity;
             temp.Light = mongoMeasurement.light;
             temp.Temperature = mongoMeasurement.temperature;
+            temp.setroomNoFromInt(mongoMeasurement.room_no);
 
             return temp;
 
@@ -126,182 +153,18 @@ namespace WebApplication.Controllers
                 roomRepository.updateRoom(room);
                 await roomRepository.saveChanges();
 
-                return NoContent();
+                return Ok("Room details have been changed");
             }
             catch (Exception exception)
             {
-                logger.LogError("Something went wrong internally in the server");
+                logger.LogError($"Something went wrong internally in the server: ", exception.Message);
                 return StatusCode(500, "Internal server error");
             }
 
 
         }
         
-        // PUT: api/Rooms/5
-        [HttpPut("moveartwork/{roomLocation}")]
-        public async Task<IActionResult> PutRoom([FromRoute] string roomLocation, [FromBody] Artwork artwork)
-        {
-            try
-            {
-                if (roomLocation == null)
-                {
-                    logger.LogError($"RoomLocation code {roomLocation} is invalid");
-                    return BadRequest("Invalid roomLocation code");
-                }
-                
-                if(artwork == null)
-                {
-                    logger.LogError("Artwork object sent was null");
-                    return BadRequest("Artwork object is null");
-                }
-                if (!ModelState.IsValid)
-                {
-                    logger.LogError("Invalid artwork object sent from client");
-                    return BadRequest("Invalid artwork object");
-                }
-
-                var newRoom = await roomRepository.GetRoomByLocationCodeAsync(artwork.Location);
-                var previousRoom = await roomRepository.GetRoomByLocationCodeAsync(roomLocation);
-                
-
-                switch (newRoom.LocationCode)
-                {
-                    case "A1":
-                        if (newRoom.CurrentCapacity == newRoom.TotalCapacity)
-                        {
-                            logger.LogError($"The room with id {newRoom.LocationCode} is at it's maximum capacity");
-                            return BadRequest("The room is at full capacity and cannot take more");
-                        }
-                        else
-                        {
-                            previousRoom.ArtworkList.Remove(artwork);
-                            previousRoom.CurrentCapacity--;
-                            newRoom.ArtworkList.Add(artwork);
-                            newRoom.CurrentCapacity++; 
-                            logger.LogInformation($"The artwork has been moved to room {newRoom.LocationCode}");
-                        }
-                        break;
-                    case "A2":
-                        if (newRoom.CurrentCapacity == newRoom.TotalCapacity)
-                        {
-                            logger.LogError($"The room with id {newRoom.LocationCode} is at it's maximum capacity");
-                            return BadRequest("The room is at full capacity and cannot take more");
-                        }
-                        else
-                        {
-                            previousRoom.ArtworkList.Remove(artwork);
-                            previousRoom.CurrentCapacity--;
-                            newRoom.ArtworkList.Add(artwork);
-                            newRoom.CurrentCapacity++; 
-                            logger.LogInformation($"The artwork has been moved to room {newRoom.LocationCode}");
-                        }
-                        break;
-                    case "A3":
-                        if (newRoom.CurrentCapacity == newRoom.TotalCapacity)
-                        {
-                            logger.LogError($"The room with id {newRoom.LocationCode} is at it's maximum capacity");
-                            return BadRequest("The room is at full capacity and cannot take more");
-                        }
-                        else
-                        {
-                            previousRoom.ArtworkList.Remove(artwork);
-                            previousRoom.CurrentCapacity--;
-                            newRoom.ArtworkList.Add(artwork);
-                            newRoom.CurrentCapacity++; 
-                            logger.LogInformation($"The artwork has been moved to room {newRoom.LocationCode}");
-                        }
-                        break;
-                    case "B1":
-                        if (newRoom.CurrentCapacity == newRoom.TotalCapacity)
-                        {
-                            logger.LogError($"The room with id {newRoom.LocationCode} is at it's maximum capacity");
-                            return BadRequest("The room is at full capacity and cannot take more");
-                        }
-                        else
-                        {
-                            previousRoom.ArtworkList.Remove(artwork);
-                            previousRoom.CurrentCapacity--;
-                            newRoom.ArtworkList.Add(artwork);
-                            newRoom.CurrentCapacity++; 
-                            logger.LogInformation($"The artwork has been moved to room {newRoom.LocationCode}");
-                        }
-                        break;
-                    case "B2":
-                        if (newRoom.CurrentCapacity == newRoom.TotalCapacity)
-                        {
-                            logger.LogError($"The room with id {newRoom.LocationCode} is at it's maximum capacity");
-                            return BadRequest("The room is at full capacity and cannot take more");
-                        }
-                        else
-                        {
-                            previousRoom.ArtworkList.Remove(artwork);
-                            previousRoom.CurrentCapacity--;
-                            newRoom.ArtworkList.Add(artwork);
-                            newRoom.CurrentCapacity++; 
-                            logger.LogInformation($"The artwork has been moved to room {newRoom.LocationCode}");
-                        }
-                        break;
-                    case "B3":
-                        if (newRoom.CurrentCapacity == newRoom.TotalCapacity)
-                        {
-                            logger.LogError($"The room with id {newRoom.LocationCode} is at it's maximum capacity");
-                            return BadRequest("The room is at full capacity and cannot take more");
-                        }
-                        else
-                        {
-                            previousRoom.ArtworkList.Remove(artwork);
-                            previousRoom.CurrentCapacity--;
-                            newRoom.ArtworkList.Add(artwork);
-                            newRoom.CurrentCapacity++; 
-                            logger.LogInformation($"The artwork has been moved to room {newRoom.LocationCode}");
-                        }
-                        break;
-                    case "B4":
-                        if (newRoom.CurrentCapacity == newRoom.TotalCapacity)
-                        {
-                            logger.LogError($"The room with id {newRoom.LocationCode} is at it's maximum capacity");
-                            return BadRequest("The room is at full capacity and cannot take more");
-                        }
-                        else
-                        {
-                            previousRoom.ArtworkList.Remove(artwork);
-                            previousRoom.CurrentCapacity--;
-                            newRoom.ArtworkList.Add(artwork);
-                            newRoom.CurrentCapacity++; 
-                            logger.LogInformation($"The artwork has been moved to room {newRoom.LocationCode}");
-                        }
-                        break;
-                    case "Storage":
-                        if (newRoom.CurrentCapacity == newRoom.TotalCapacity)
-                        {
-                            logger.LogError($"The room with id {newRoom.LocationCode} is at it's maximum capacity");
-                            return BadRequest("The room is at full capacity and cannot take more");
-                        }
-                        else
-                        {
-                            previousRoom.ArtworkList.Remove(artwork);
-                            previousRoom.CurrentCapacity--;
-                            newRoom.ArtworkList.Add(artwork);
-                            newRoom.CurrentCapacity++; 
-                            logger.LogInformation($"The artwork has been moved to room {newRoom.LocationCode}");
-                        }
-                        break;
-                    default:
-                        logger.LogError("There has been an error somewhere");
-                        return BadRequest("Internal server error in switch/ room Controller");
-
-                }
-
-                return Ok("Artwork has been moved");
-            }
-            catch (Exception e)
-            {
-                logger.LogError("Something went wrong internally in the server");
-                return StatusCode(500, "Internal server error");
-            }
-     
-
-        }
+        
         
         
         // DELETE: api/Rooms/5
@@ -310,7 +173,8 @@ namespace WebApplication.Controllers
         {
             try
             {
-                var artwork = await roomRepository.GetRoomByLocationCodeAsync(id);
+                var artwork = await roomRepository.GetRoomWithDetails(id);
+                
 
                 if (artwork == null)
                 {
@@ -321,11 +185,11 @@ namespace WebApplication.Controllers
                 roomRepository.deleteRoom(artwork);
                 await roomRepository.saveChanges();
 
-                return NoContent();
+                return Ok("Room has been deleted");
             }
             catch (Exception exception)
             {
-                logger.LogError("Something went wrong internally in the server");
+                logger.LogError($"Something went wrong internally in the server: ", exception.Message);
                 return StatusCode(500, "Internal server error");
             }
         }
@@ -358,11 +222,20 @@ namespace WebApplication.Controllers
             }
             catch (Exception exception)
             {
-                logger.LogError("Something went wrong internally in the server");
+                logger.LogError($"Something went wrong internally in the server: ", exception.Message);
                 return StatusCode(500, "Internal server error");
             }
+            
+            
 
 
+        }
+        [HttpPost("{test}")]
+        public  RoomMeasurementList deleteAdmin(string email)
+        {
+            
+            
+            return _mongoRepository.LoadAllMeasurements();
         }
     }
 }

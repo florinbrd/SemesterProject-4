@@ -1,36 +1,50 @@
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using WebApplication.Database;
+using WebApplication.Database.Repositories.VisitorRep;
 using WebApplication.Datamodel;
 
 namespace WebApplication.Controllers
 {
     [ApiController]
     [Route("visitors")]
-
     public class VisitorController : ControllerBase
     {
+        private readonly VisitorRepository VisitorRepository;
+        private readonly ILogger<VisitorController> Logger;
 
-        private readonly MuseumContext context;
-
-        public VisitorController(MuseumContext context)
+        public VisitorController(VisitorRepository VisitorRepository, ILogger<VisitorController> Logger)
         {
-            this.context = context;
+            this.VisitorRepository = VisitorRepository;
+            this.Logger = Logger; 
         }
 
         // POST
         [HttpPost]
-        public Task<IActionResult> createArtwork([FromBody] List<Visitor> visitors)
+        public async Task<IActionResult> postVisitors([FromBody] VisitorList visitors)
         {
-
-            foreach (var e in visitors)
+            try
             {
-                context.Visitors.Add(e);
+                if (visitors == null)
+                {
+                    Logger.LogError("The visitor List is null.");
+                    return BadRequest("Null visitor list");
+                }
+                
+                VisitorRepository.AddVisitors(visitors);
+                await VisitorRepository.saveChanges();
+
+            }
+            catch(Exception exception)
+            {
+                Logger.LogError($"Something went wrong internally in the server: ", exception.Message);
+                return StatusCode(500, "Internal server error");
             }
 
-            return null;
-
+            return Ok("Visitor List has been added to the database");
 
         }
     }

@@ -8,7 +8,6 @@
       <jdbc-url>jdbc:jtds:sqlserver://sqlserversss.database.windows.net/museum;instance=museum</jdbc-url>
       <driver-properties>
         <property name="applicationName" value="DataGrip" />
-        <property name="appName" value="DataGrip" />
       </driver-properties>
     </data-source>
   </component>

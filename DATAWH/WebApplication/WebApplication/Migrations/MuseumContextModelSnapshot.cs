@@ -19,18 +19,18 @@ namespace WebApplication.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 128)
                 .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
-            modelBuilder.Entity("WebApplication1.Datamodel.Administrator", b =>
+            modelBuilder.Entity("WebApplication.Datamodel.Administrator", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int")
                         .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
-                    b.Property<string>("Password")
+                    b.Property<string>("Email")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("Username")
+                    b.Property<string>("Password")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
@@ -39,7 +39,7 @@ namespace WebApplication.Migrations
                     b.ToTable("Administrators");
                 });
 
-            modelBuilder.Entity("WebApplication1.Datamodel.Artwork", b =>
+            modelBuilder.Entity("WebApplication.Datamodel.Artwork", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -104,7 +104,7 @@ namespace WebApplication.Migrations
                     b.ToTable("Artworks");
                 });
 
-            modelBuilder.Entity("WebApplication1.Datamodel.Museum", b =>
+            modelBuilder.Entity("WebApplication.Datamodel.Museum", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -122,7 +122,7 @@ namespace WebApplication.Migrations
                     b.ToTable("Museum");
                 });
 
-            modelBuilder.Entity("WebApplication1.Datamodel.Room", b =>
+            modelBuilder.Entity("WebApplication.Datamodel.Room", b =>
                 {
                     b.Property<string>("LocationCode")
                         .HasColumnType("nvarchar(450)");
@@ -142,9 +142,6 @@ namespace WebApplication.Migrations
                     b.Property<int>("Light")
                         .HasColumnType("int");
 
-                    b.Property<int?>("LiveRoomMeasurementsId")
-                        .HasColumnType("int");
-
                     b.Property<int>("Temperature")
                         .HasColumnType("int");
 
@@ -153,12 +150,10 @@ namespace WebApplication.Migrations
 
                     b.HasKey("LocationCode");
 
-                    b.HasIndex("LiveRoomMeasurementsId");
-
                     b.ToTable("Rooms");
                 });
 
-            modelBuilder.Entity("WebApplication1.Datamodel.RoomMeasurement", b =>
+            modelBuilder.Entity("WebApplication.Datamodel.RoomMeasurement", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -174,15 +169,21 @@ namespace WebApplication.Migrations
                     b.Property<decimal>("Light")
                         .HasColumnType("decimal(8,4)");
 
+                    b.Property<DateTime>("MeasurementDate")
+                        .HasColumnType("datetime2");
+
                     b.Property<decimal>("Temperature")
                         .HasColumnType("decimal(8,4)");
+
+                    b.Property<string>("roomNo")
+                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
 
                     b.ToTable("RoomMeasurements");
                 });
 
-            modelBuilder.Entity("WebApplication1.Datamodel.Visitor", b =>
+            modelBuilder.Entity("WebApplication.Datamodel.Visitor", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -192,7 +193,7 @@ namespace WebApplication.Migrations
                     b.Property<int>("Age")
                         .HasColumnType("int");
 
-                    b.Property<string>("FirstNameName")
+                    b.Property<string>("FirstName")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Gender")
@@ -215,18 +216,11 @@ namespace WebApplication.Migrations
                     b.ToTable("Visitors");
                 });
 
-            modelBuilder.Entity("WebApplication1.Datamodel.Artwork", b =>
+            modelBuilder.Entity("WebApplication.Datamodel.Artwork", b =>
                 {
-                    b.HasOne("WebApplication1.Datamodel.Room", null)
+                    b.HasOne("WebApplication.Datamodel.Room", null)
                         .WithMany("ArtworkList")
                         .HasForeignKey("RoomLocationCode");
-                });
-
-            modelBuilder.Entity("WebApplication1.Datamodel.Room", b =>
-                {
-                    b.HasOne("WebApplication1.Datamodel.RoomMeasurement", "LiveRoomMeasurements")
-                        .WithMany()
-                        .HasForeignKey("LiveRoomMeasurementsId");
                 });
 #pragma warning restore 612, 618
         }
